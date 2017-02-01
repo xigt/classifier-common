@@ -11,6 +11,7 @@ from sklearn.feature_selection import chi2
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from abc import abstractclassmethod
 
 LOG = logging.getLogger()
 
@@ -52,14 +53,15 @@ class Distribution(object):
     def classes(self): return self.dict.keys()
 
 
+
 class ClassifierWrapper(object):
     """
     This class implements a wrapper class to combine sklearn's
     learner, vectorizer, and feature selector classes into one
     serializable object.
     """
+    @abstractclassmethod
     def __init__(self):
-        self.learner = LogisticRegression()
         # self.learner = AdaBoostClassifier()
         # self.learner.set_params(n_jobs=multiprocessing.cpu_count())
         self.dv = DictVectorizer(dtype=int)
@@ -176,3 +178,15 @@ class ClassifierWrapper(object):
         c = pickle.load(f)
         assert isinstance(c, ClassifierWrapper)
         return c
+
+
+class LogisticRegressionWrapper(ClassifierWrapper):
+    def __init__(self):
+        super().__init__()
+        self.learner = LogisticRegression()
+
+class AdaboostWrapper(ClassifierWrapper):
+    def __init__(self):
+        super().__init__()
+        self.learner = AdaBoostClassifier()
+
