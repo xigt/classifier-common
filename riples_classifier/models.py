@@ -97,10 +97,15 @@ class ClassifierWrapper(object):
             LOG.info("Feature selection disabled, all available features are used.")
             return vec
 
+    def _checklearner(self):
+        if self.learner is None:
+            raise Exception("Learner must be specified.")
+
     def train(self, data, num_feats=None, weight_path=None):
         """
         :type data: list[DataInstance]
         """
+        self._checklearner()
         labels = [d.label for d in data]
         feats = [d.feats for d in data]
 
@@ -119,6 +124,7 @@ class ClassifierWrapper(object):
         :rtype: list[Distribution]
 
         """
+        self._checklearner()
         labels = [d.label for d in data]
         feats = [d.feats for d in data]
 
@@ -130,6 +136,7 @@ class ClassifierWrapper(object):
         return [Distribution(self.classes(), p) for p in probs]
 
     def classes(self):
+        self._checklearner()
         return self.learner.classes_.tolist()
 
     def feat_names(self):
