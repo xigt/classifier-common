@@ -60,12 +60,10 @@ class ClassifierWrapper(object):
     learner, vectorizer, and feature selector classes into one
     serializable object.
     """
-    @abstractclassmethod
     def __init__(self):
-        # self.learner = AdaBoostClassifier()
-        # self.learner.set_params(n_jobs=multiprocessing.cpu_count())
         self.dv = DictVectorizer(dtype=int)
         self.feat_selector = None
+        self.learner = None
 
     def _vectorize(self, data, testing=False):
         if testing:
