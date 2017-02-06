@@ -87,8 +87,9 @@ class ClassifierWrapper(object):
             else:
                 return vec
 
-        # Only do feature selection if num_feats is positive.
-        elif num_feats is not None and (num_feats > 0):
+        # Only do feature selection if num_feats is positive, and there are more features
+        # than max_num
+        elif num_feats is not None and (num_feats > 0) and num_feats < vec.shape[1]:
             LOG.info('Feature selection enabled, limiting to {} features.'.format(num_feats))
             self.feat_selector = SelectKBest(chi2, num_feats)
             return self.feat_selector.fit_transform(vec, labels)
@@ -120,19 +121,30 @@ class ClassifierWrapper(object):
         Given a list of document instances, return a list
         of the probabilities of the Positive, Negative examples.
 
-        :type data: list[DataInstance]
+        :type data: Iterable[DataInstance]
         :rtype: list[Distribution]
 
         """
         self._checklearner()
-        labels = [d.label for d in data]
-        feats = [d.feats for d in data]
+        labels = []
+        feats = []
+
+        # We need to make this loop happen this way in case
+        # the data is a generator, and doing list
+        # comprehensions will result in one list being empty.
+        for datum in data:
+            # vec = self._vectorize_and_select([datum.feats], [datum.label], testing=True)
+            # probs = self.learner.predict_proba(vec)
+            # yield Distribution(self.classes(), probs[0])
+            labels.append(datum.label)
+            feats.append(datum.feats)
+
 
         vec = self._vectorize_and_select(feats, labels, testing=True)
-
+        #
         # Return the
         probs = self.learner.predict_proba(vec)
-
+        #
         return [Distribution(self.classes(), p) for p in probs]
 
     def classes(self):
