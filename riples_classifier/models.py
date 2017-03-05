@@ -116,7 +116,7 @@ class ClassifierWrapper(object):
             LOG.info('Writing feature weights to "{}"'.format(weight_path))
             self.dump_weights(weight_path)
 
-    def test(self, data):
+    def test(self, data, prev_label_func=None):
         """
         Given a list of document instances, return a list
         of the probabilities of the Positive, Negative examples.
@@ -132,20 +132,22 @@ class ClassifierWrapper(object):
         # We need to make this loop happen this way in case
         # the data is a generator, and doing list
         # comprehensions will result in one list being empty.
+        prev_class = None
+
         for datum in data:
-            # vec = self._vectorize_and_select([datum.feats], [datum.label], testing=True)
-            # probs = self.learner.predict_proba(vec)
-            # yield Distribution(self.classes(), probs[0])
-            labels.append(datum.label)
-            feats.append(datum.feats)
+            # If the "use_prev_label" is true, use it.
+            if prev_label_func is not None and prev_class is not None:
+                prev_label_feat = prev_label_func(prev_class)
+                datum.feats[prev_label_feat] = True
 
+            vec = self._vectorize_and_select([datum.feats], [datum.label], testing=True)
+            probs = self.learner.predict_proba(vec)
 
-        vec = self._vectorize_and_select(feats, labels, testing=True)
-        #
-        # Return the
-        probs = self.learner.predict_proba(vec)
-        #
-        return [Distribution(self.classes(), p) for p in probs]
+            d = Distribution(self.classes(), probs[0])
+            prev_class = d.best_class
+
+            yield d
+
 
     def classes(self):
         self._checklearner()
