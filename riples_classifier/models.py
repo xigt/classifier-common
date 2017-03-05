@@ -209,3 +209,34 @@ class AdaboostWrapper(ClassifierWrapper):
         super().__init__()
         self.learner = AdaBoostClassifier()
 
+
+def show_weights(cw, n=-1):
+    # Group Features by class
+    default_weights = {}
+
+    if isinstance(cw.learner, LogisticRegression):
+        classes = cw.learner.classes_
+        defaults = cw.learner.intercept_
+        coefs = cw.learner.coef_
+
+        weights_per_class = -1 if n < 0 else n / len(classes)
+
+        fmt = '{:<20s}{:.4g}'
+
+        for i, c in enumerate(classes):
+            d = defaults[i]
+            print('- '*5 + c + ' -' * 5)
+            print(fmt.format('<DEFAULT>', d))
+
+            feat_weights = {f: coefs[i][j] for j, f in enumerate(cw.feat_names()[cw.feat_supports()])}.items()
+            sorted_weights = sorted(feat_weights, reverse=True, key=lambda x: x[1])
+
+            n = 0
+            for feat, weight in sorted_weights:
+                print(fmt.format(feat, weight))
+                n+=1
+                if weights_per_class != -1 and n >= weights_per_class:
+                    break
+
+
+    sys.exit()
