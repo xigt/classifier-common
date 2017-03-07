@@ -4,6 +4,7 @@ import os
 import pickle
 import multiprocessing
 
+import sys
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest
@@ -263,4 +264,3 @@ def show_weights(cw, n=-1):
                     break
 
 
-    sys.exit()
