@@ -253,7 +253,7 @@ def show_weights(cw, n=-1):
             print(fmt.format('<DEFAULT>', d))
 
             feat_weights = {f: coefs[i][j] for j, f in enumerate(cw.feat_names()[cw.feat_supports()])}.items()
-            sorted_weights = sorted(feat_weights, reverse=True, key=lambda x: x[1])
+            sorted_weights = sorted(feat_weights, reverse=True, key=lambda x: abs(x[1]))
 
             n = 0
             for feat, weight in sorted_weights:
