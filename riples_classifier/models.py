@@ -102,13 +102,27 @@ class ClassifierWrapper(object):
         if self.learner is None:
             raise Exception("Learner must be specified.")
 
-    def train(self, data, num_feats=None, weight_path=None):
+    def train(self, data, num_feats=None, weight_path=None, feat_filter=None):
         """
         :type data: list[DataInstance]
         """
         self._checklearner()
-        labels = [d.label for d in data]
-        feats = [d.feats for d in data]
+        labels = []
+        feats = []
+
+        for datum in data:
+            # If a feature filter function is defined,
+            # only use features that pass the filter.
+            datum_feats = datum.feats
+            if feat_filter is not None:
+                new_feats = {}
+                for feat in datum.feats:
+                    if feat_filter(feat):
+                        new_feats[feat] = datum.feats[feat]
+                datum_feats = new_feats
+
+            feats.append(datum_feats)
+            labels.append(datum.label)
 
         vec = self._vectorize_and_select(feats, labels, num_feats=num_feats, testing=False)
         self.learner.fit(vec, labels)
@@ -116,7 +130,7 @@ class ClassifierWrapper(object):
             LOG.info('Writing feature weights to "{}"'.format(weight_path))
             self.dump_weights(weight_path)
 
-    def test(self, data, prev_label_func=None):
+    def test(self, data, prev_label_func=None, feat_filter=None):
         """
         Given a list of document instances, return a list
         of the probabilities of the Positive, Negative examples.
@@ -126,8 +140,6 @@ class ClassifierWrapper(object):
 
         """
         self._checklearner()
-        labels = []
-        feats = []
 
         # We need to make this loop happen this way in case
         # the data is a generator, and doing list
@@ -135,12 +147,24 @@ class ClassifierWrapper(object):
         prev_class = None
 
         for datum in data:
+
+
+            # If there is a filter specified, pass features through it.
+            feats = datum.feats
+            if feat_filter is not None:
+                new_feats = {}
+                for feat in datum.feats:
+                    # Only add the features that pass the filter.
+                    if feat_filter(feat):
+                        new_feats[feat] = datum.feats[feat]
+                feats = new_feats
+
             # If the "use_prev_label" is true, use it.
             if prev_label_func is not None and prev_class is not None:
                 prev_label_feat = prev_label_func(prev_class)
-                datum.feats[prev_label_feat] = True
+                feats[prev_label_feat] = True
 
-            vec = self._vectorize_and_select([datum.feats], [datum.label], testing=True)
+            vec = self._vectorize_and_select([feats], [datum.label], testing=True)
             probs = self.learner.predict_proba(vec)
 
             d = Distribution(self.classes(), probs[0])
