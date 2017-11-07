@@ -1,6 +1,10 @@
 from setuptools import setup
 
-setup(name='riples_classifier',
+setup(name='riples-classifier',
       version='0.1',
       description='Unified classifier framework for RiPLes project code.',
-      install_requires=['scikit-learn>=0.18'])
+      packages=['riples_classifier'],
+      install_requires=[
+            'scikit-learn>=0.18',
+            'scipy>=1.0',
+      ])
